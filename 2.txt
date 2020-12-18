@@ -1,0 +1,165 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <Windows.h>
+using namespace std;
+
+// Сочетание без повторений
+bool NextCombination(int* a, int n, int k)
+{
+    for (int i = k - 1; i >= 0; i--)
+        if (a[i] < n - k + i)
+        {
+            a[i]++;
+            for (int j = i + 1; j < k; j++)
+                a[j] = a[j - 1] + 1;
+            return true;
+        }
+    return false;
+}
+
+void Swap(int* a, int i, int j)
+{
+    int tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+}
+
+// Размещение без повторений
+bool NextPermulation(int* a, int n, int m)
+{
+    int j;
+    do {
+        // Ищем с конца индекс первого наименьшего символа
+        j = n - 1;
+        while (j > -1 && a[j] >= a[j + 1])
+            j--;
+
+        // Если мы дошли до начала, значит, получили максимальное размещение.
+        // Алгоритм закончен.
+        if (j <= -1)
+            return false;
+
+        // Ищем с конца индекс символа, стоящего после наименьшего символа с конца
+        int k = n - 1;
+        while (a[j] >= a[k])
+            k--;
+
+        // Меняем эти символы местами
+        Swap(a, j, k);
+
+        // Сортируем оставшуюся часть последовательности
+        int l = j + 1, r = n - 1;
+        while (l < r)
+            Swap(a, l++, r--);
+    } while (j > m - 1);
+    return true;
+}
+
+// Составляем матрицу смежности 
+// по перечислению всех ребер
+// для смешанного графа
+void MatrixAdjacency(int** a, string* b, int p, string s)
+{
+    int point;
+    for (int i = 0; i < p; i++)
+        for (int j = 0; j < p; j++)
+            a[i][j] = 0;
+
+    for (int i = 0; i < p && s.size() > 0; i++)
+    {
+        point = s.find(' ');
+        while (b[i].find(s[point + 1]) == 0)
+        {
+            for (int j = 0; j < p; j++)
+            {
+                    if (b[j].find(s[point + 2]) == 0)
+                        a[i][j] = 1;
+            }
+            s = s.erase(point, 3);
+            point = s.find(' ');
+        }
+    }
+}
+
+int main()
+{
+    setlocale(LC_ALL, "rus");
+    // Массив вершин
+    string* mass_point;
+    // Массив ребер
+    string* mass_edge;
+    // Массив для составления сочетаний
+    int* mass_number;
+    // Массив для составления размещений
+    int* mass_permulation;
+    // Матрица смежности вершин
+    int** matrix_adjacency;
+    int p, q, i, j;
+    long int ind, count = 0;
+    ofstream F("Exersice_2.txt");
+    do
+    {
+        cout << ("Введите количество вершин p: ");
+        cin >> p;
+    } while (p <= 0);
+
+    mass_permulation = new int[p];
+    for (i = 0; i < p; i++)
+    {
+        mass_permulation[i] = i;
+    }
+
+    matrix_adjacency = new int* [p];
+    for (i = 0; i < p; i++)
+        matrix_adjacency[i] = new int[p];
+
+    ind = (p - 1) * p;
+
+    mass_point = new string[p];
+    mass_edge = new string[ind];
+
+    for (i = 0; i < p; i++)
+        mass_point[i] = 'a' + i;
+
+    i = 1;
+    if (p > 1) {
+        mass_edge[0] = mass_point[mass_permulation[0]] + mass_point[mass_permulation[1]];
+        while (NextPermulation(mass_permulation, p, 2))
+        {
+            mass_edge[i] = mass_point[mass_permulation[0]] + mass_point[mass_permulation[1]];
+            i++;
+        }
+    }
+
+    for (q = 0; q <= ind; q++)
+    {
+        mass_number = new int[q];
+        for (i = 0; i < q; i++)
+            mass_number[i] = i;
+        string s;
+        do
+        {
+            s = "";
+            for (i = 0; i < q; i++)
+                s += mass_edge[mass_number[i]] + " ";
+            s = s.insert(0, " ");
+            s = s.substr(0, s.size() - 1);
+            MatrixAdjacency(matrix_adjacency, mass_point, p, s);
+            count++;
+            F << count << ")" << endl;
+            for (i = 0; i < p; i++)
+            {
+                for (j = 0; j < p; j++)
+                    F << matrix_adjacency[i][j] << " ";
+                F << endl;
+            }
+            
+            F << endl;
+        } while (NextCombination(mass_number, ind, q));
+    }
+
+    F.close();
+    system("pause");
+    return 0;
+}

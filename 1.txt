@@ -1,0 +1,128 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <Windows.h>
+using namespace std;
+
+long int Factorial(int n)
+{
+    long f = 1;
+    for (int i = 1; i <= n; i++)
+        f *= i;
+    return f;
+}
+
+// Сочетание без повторений
+bool NextCombination(int* a, int n, int k)
+{
+    for (int i = k - 1; i >= 0; i--)
+        if (a[i] < n - k + i)
+        {
+            a[i]++;
+            for (int j = i + 1; j < k; j++)
+                a[j] = a[j - 1] + 1;
+            return true;
+        }
+    return false;
+}
+
+// Составляем матрицу смежности 
+// по перечислению всех ребер
+void MatrixAdjacency(int** a, string* b, int p, string s)
+{
+    int point;
+    for (int i = 0; i < p; i++)
+        for (int j = 0; j < p; j++)
+            a[i][j] = 0;
+
+    for (int i = 0; i < p && s.size()>0; i++)
+    {
+        point = s.find(b[i]);
+
+        while (point != -1)
+        {
+            for (int j = 0; j < p; j++)
+            {
+                if (i != j)
+                    if (b[j].find(s[point + 1]) == 0)
+                    {
+                        a[i][j] = 1;
+                        a[j][i] = 1;
+                    }
+            }
+            s = s.erase(point, 3);
+            point = s.find(b[i]);
+        }
+    }
+}
+
+int main()
+{
+    setlocale(LC_ALL, "rus");
+    // Массив вершин
+    string* mass_point;
+    // Массив ребер
+    string* mass_edge;
+    // Массив для составления сочетаний
+    int* mass_number = new int[2]{ 0,1 };
+    // Матрица смежности вершин
+    int** matrix_adjacency;
+    int p, q, i, j, count = 0;
+    long int ind;
+    ofstream F("Exersice_1.txt");
+    do
+    {
+        cout << ("Введите количество вершин p: ");
+        cin >> p;
+    } while (p <= 0);
+
+    matrix_adjacency = new int* [p];
+    for (i = 0; i < p; i++)
+        matrix_adjacency[i] = new int[p];
+
+    ind = Factorial(p) / (Factorial(2) * Factorial(p - 2));
+
+    do
+    {
+        cout << "Введите количество ребер q: ";
+        cin >> q;
+    } while (q < 0 || q > ind);
+
+    mass_point = new string[p];
+    mass_edge = new string[ind];
+
+    for (i = 0; i < p; i++)
+        mass_point[i] = 'a' + i;
+
+    i = 0;
+    if (p > 1) {
+        do {
+            mass_edge[i] = mass_point[mass_number[0]] + mass_point[mass_number[1]];
+            i++;
+        } while (NextCombination(mass_number, p, 2));
+    }
+
+    mass_number = new int[q];
+    for (i = 0; i < q; i++)
+        mass_number[i] = i;
+    string s;
+    do
+    {
+        s = "";
+        for (i = 0; i < q; i++)
+            s += mass_edge[mass_number[i]] + " ";
+        MatrixAdjacency(matrix_adjacency, mass_point, p, s);
+        count++;
+        F << count << ")" << endl;
+        for (i = 0; i < p; i++)
+        {
+            for (j = 0; j < p; j++)
+                F << matrix_adjacency[i][j] << " ";
+            F << endl;
+        }
+        F << endl;
+    } while (NextCombination(mass_number, ind, q));
+    F.close();
+    system("pause");
+    return 0;
+}
